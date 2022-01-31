@@ -1,7 +1,7 @@
 {
-  "name": "codeonline",
-  "displayName": "CodeOnline",
-  "description": "Run code online from VSCode",
+  "name": "runcodeonline",
+  "displayName": "Run Code Online",
+  "description": "Run code online directly from VSCode",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.63.0"
