@@ -17,6 +17,8 @@ C++, C, C#, Java, Python, Ruby, Kotlin, Swift
 
 Install the *Run Code Online* extension from VS Code Extension Marketplace.
 
+[extension.png](/images/extension.png)
+
 In the file you want to execute simply press ***Ctrl+Shift+p*** in your keyboard to open the command palette. 
 Now type ***run*** and press *enter*.
 
@@ -33,3 +35,4 @@ If you wan't to provide custom input to your program, create a file named ***inp
 ![inputDemo.gif](https://s10.gifyu.com/images/Code-Online2.gif)
 
 **Thanks to @Jaagrav for letting me use his [CodeX API](https://github.com/Jaagrav/CodeX)**
+
