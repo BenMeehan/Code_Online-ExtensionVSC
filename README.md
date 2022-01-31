@@ -30,4 +30,4 @@ If you wan't to provide custom input to your program, create a file named ***inp
 
 ![inputDemo.gif](https://s10.gifyu.com/images/Code-Online2.gif)
 
-**Thank to @Jaagrav for letting me use his [CodeX API](https://github.com/Jaagrav/CodeX)
+**Thanks to @Jaagrav for letting me use his [CodeX API](https://github.com/Jaagrav/CodeX)**
