@@ -9,7 +9,6 @@ var langs=["cpp","c","py","java","rb","cs","kt","swift"]
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
-//6l2nvptoh4jti6lnxz3n7wampw6rb52hnut62dbqlfpomfxblfgq
 
 /**
  * @param {vscode.ExtensionContext} context

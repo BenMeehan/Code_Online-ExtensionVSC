@@ -1,6 +1,7 @@
 {
   "name": "runcodeonline",
   "displayName": "Run Code Online",
+  "publisher": "BenMeehan111",
   "description": "Run code online directly from VSCode",
   "version": "0.0.1",
   "engines": {
