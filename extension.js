@@ -26,12 +26,12 @@ function activate(context) {
 		// The code you place here will be executed every time your command is executed
 
 		// Display a message box to the user
-		vscode.window.showInformationMessage('Running code in CodeX...');
+		vscode.window.showInformationMessage('Running code in online compiler...');
 
 		// Get the required file paths
 		var currentlyOpenFile = vscode.window.activeTextEditor?.document.uri.fsPath;
 		var inputFile = currentlyOpenFile.substring(0, currentlyOpenFile.lastIndexOf('\\'))+"\\input.txt";
-		var outputFile=currentlyOpenFile.substring(0, currentlyOpenFile.lastIndexOf('\\'))+"\\output.txt";
+		let outputFile = currentlyOpenFile.substring(0, currentlyOpenFile.lastIndexOf('.')) + '-output.txt';
 
 		// Variable to store the code, language and custom inputs
 		var content={
@@ -58,10 +58,10 @@ function activate(context) {
 			// Convert the data to JSON
 			var data=JSON.stringify(content);
 
-			// Configuration for CodeX API
+			// Configuration for API
 			var config = {
 				method: 'post',
-				url: 'https://codexweb.netlify.app/.netlify/functions/enforceCode',
+				url: 'http://localhost:8080/compile',
 				headers: { 
 				'Content-Type': 'application/json'
 				},
@@ -71,14 +71,16 @@ function activate(context) {
 			// Making an axios request to the API with the JSON content
 			axios(config)
 			.then(function (response) {
-				fs.writeFileSync(outputFile,response.data.output);
+				fs.writeFileSync(outputFile,response.data);
 			})
 			.catch(function (error) {
+				// Message to user
+			vscode.window.showInformationMessage(data);
 				fs.writeFileSync(outputFile,error);
 			});
 
 			// Message to user
-			vscode.window.showInformationMessage('Check the output.txt file...');
+			vscode.window.showInformationMessage('Check the ', outputFile ,'file...');
 
 		}
 	});
