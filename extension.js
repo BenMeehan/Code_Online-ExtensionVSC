@@ -5,7 +5,7 @@ const fs=require("fs");
 var axios = require('axios');
 
 // Supported Languages
-var langs=["cpp","c","py","java","rb","cs","kt","swift"]
+var langs=["cpp","c"]
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
