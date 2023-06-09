@@ -3,6 +3,7 @@
 const vscode = require('vscode');
 const fs=require("fs");
 var axios = require('axios');
+const path=require('path')
 
 // Supported Languages
 var langs=["cpp","c","py","java","js","go","rust"]
@@ -30,7 +31,7 @@ function activate(context) {
 
 		// Get the required file paths
 		var currentlyOpenFile = vscode.window.activeTextEditor?.document.uri.fsPath;
-		var inputFile = currentlyOpenFile.substring(0, currentlyOpenFile.lastIndexOf('\\'))+"\\input.txt";
+		var inputFile = path.join(path.dirname(currentlyOpenFile), "input.txt");
 		let outputFile = currentlyOpenFile.substring(0, currentlyOpenFile.lastIndexOf('.')) + '-output.txt';
 
 		// Variable to store the code, language and custom inputs
