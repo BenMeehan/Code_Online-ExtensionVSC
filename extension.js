@@ -5,7 +5,7 @@ const fs=require("fs");
 var axios = require('axios');
 
 // Supported Languages
-var langs=["cpp","c"]
+var langs=["cpp","c","py"]
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -61,7 +61,7 @@ function activate(context) {
 			// Configuration for API
 			var config = {
 				method: 'post',
-				url: 'http://localhost:8080/compile',
+				url: 'https://load-balancer-1l8h.onrender.com/compile',
 				headers: { 
 				'Content-Type': 'application/json'
 				},
