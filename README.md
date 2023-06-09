@@ -1,38 +1,50 @@
-# Welcome to Code Online Extension
+# Run Code Online VSCode Extension
 
-Code Online is a free extension for  Visual Studio Code which allows you to run your program completely online directly from your editor without the need for a compiler to be installed in the local machine.
+**Run Code Online** is a Visual Studio Code extension that allows you to compile and run code from multiple programming languages using an online compiler API. It simplifies the process of code execution by sending your code to the API, capturing the output, and displaying it in the editor.
 
-It is perfect if you want to try out a try language or quickly execute a program in VS Code without installing a compiler.
+**NOTE** : *This extension does not supprot GUI apps.*
 
-**NOTE:**
-This extension does not support GUI apps.
+![demo.gif](https://s11.gifyu.com/images/SurpE.gif)
 
 ## Supported Languages
-C++, C, C#, Java, Python, Ruby, Kotlin, Swift
 
-... more to be added soon.
+Run Code Online currently supports the following programming languages:
 
+- C++
+- C
+- Python
+- Java
+- Javascript
+- Go
+- Rust
+- *more to be added soon...*
 
-# How to use
+## Features
 
-Install the *Run Code Online* extension from VS Code Extension Marketplace.
+- Supports multiple programming languages.
+- Automatic language detection based on the file extension.
+- Ability to provide custom inputs for code execution.
+- Easy-to-use interface with a command and status bar integration.
+- Saves the output in a separate file for reference.
 
-![extension.png](https://i.ibb.co/jLHktgL/Screenshot-4.png)
+## Installation
 
-In the file you want to execute simply press ***Ctrl+Shift+p*** in your keyboard to open the command palette. 
-Now type ***run*** and press *enter*.
+1. Launch Visual Studio Code.
+2. Go to the Extensions view (Ctrl+Shift+X).
+3. Search for "Run Code Online" and click **Install**.
+4. Once installed, the extension is ready to use.
 
-![demo.gif](https://s10.gifyu.com/images/Code-Online1.gif)
+## Usage
 
-Thats it!
+1. Open a file with the code you want to run.
+2. Optionally, create an `input.txt` file in the same directory to provide custom inputs.
+3. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) to open the Command Palette.
+4. Type "CodeOnline: run" and select the command.
+5. The extension will compile the code and display the output in the editor.
+6. Check the output file (`YOUR_FILE_NAME-output.txt`) for reference.
 
-You can view the output of your program in the ***output.txt*** file in the same directory.
+## Feedback and Support
 
-## Providing custom input
+If you encounter any issues or have suggestions for improvement, please don't hesitate to open an issue on the `benmeehan111@gmail.com`. Your feedback is valuable and appreciated.
 
-If you wan't to provide custom input to your program, create a file named ***input.txt*** in the same directory and enter the input in that file.
-
-![inputDemo.gif](https://s10.gifyu.com/images/Code-Online2.gif)
-
-**Thanks to @Jaagrav for letting me use his [CodeX API](https://github.com/Jaagrav/CodeX)**
-
+**Enjoy coding with CodeOnline!**

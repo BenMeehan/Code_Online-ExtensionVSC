@@ -7,3 +7,17 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## [Unreleased]
 
 - Initial release
+
+## [0.0.1]
+
+- Compiling using CodeEX API
+
+## [1.0.0] - 2023-06-09
+
+### Added
+- New custom online compiler
+- New languages Rust and Golang
+
+### Removed
+
+- CodeEX API

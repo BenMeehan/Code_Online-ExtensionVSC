@@ -3,9 +3,10 @@
 const vscode = require('vscode');
 const fs=require("fs");
 var axios = require('axios');
+const path=require('path')
 
 // Supported Languages
-var langs=["cpp","c","py","java","rb","cs","kt","swift"]
+var langs=["cpp","c","py","java","js","go","rs"]
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -26,12 +27,12 @@ function activate(context) {
 		// The code you place here will be executed every time your command is executed
 
 		// Display a message box to the user
-		vscode.window.showInformationMessage('Running code in CodeX...');
+		vscode.window.showInformationMessage('Running code in online compiler...');
 
 		// Get the required file paths
 		var currentlyOpenFile = vscode.window.activeTextEditor?.document.uri.fsPath;
-		var inputFile = currentlyOpenFile.substring(0, currentlyOpenFile.lastIndexOf('\\'))+"\\input.txt";
-		var outputFile=currentlyOpenFile.substring(0, currentlyOpenFile.lastIndexOf('\\'))+"\\output.txt";
+		var inputFile = path.join(path.dirname(currentlyOpenFile), "input.txt");
+		let outputFile = currentlyOpenFile.substring(0, currentlyOpenFile.lastIndexOf('.')) + '-output.txt';
 
 		// Variable to store the code, language and custom inputs
 		var content={
@@ -58,10 +59,10 @@ function activate(context) {
 			// Convert the data to JSON
 			var data=JSON.stringify(content);
 
-			// Configuration for CodeX API
+			// Configuration for API
 			var config = {
 				method: 'post',
-				url: 'https://codexweb.netlify.app/.netlify/functions/enforceCode',
+				url: 'https://load-balancer-1l8h.onrender.com/compile',
 				headers: { 
 				'Content-Type': 'application/json'
 				},
@@ -71,14 +72,16 @@ function activate(context) {
 			// Making an axios request to the API with the JSON content
 			axios(config)
 			.then(function (response) {
-				fs.writeFileSync(outputFile,response.data.output);
+				fs.writeFileSync(outputFile,response.data);
 			})
 			.catch(function (error) {
+				// Message to user
+			vscode.window.showInformationMessage(data);
 				fs.writeFileSync(outputFile,error);
 			});
 
 			// Message to user
-			vscode.window.showInformationMessage('Check the output.txt file...');
+			vscode.window.showInformationMessage('Check the ', outputFile ,'file...');
 
 		}
 	});
