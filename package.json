@@ -4,7 +4,7 @@
   "publisher": "BenMeehan111",
   "description": "Run code online directly from VSCode",
   "icon": "images/layers.png",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "engines": {
     "vscode": "^1.63.0"
   },
