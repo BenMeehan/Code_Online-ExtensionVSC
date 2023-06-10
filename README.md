@@ -2,7 +2,7 @@
 
 **Run Code Online** is a Visual Studio Code extension that allows you to compile and run code from multiple programming languages using an online compiler API. It simplifies the process of code execution by sending your code to the API, capturing the output, and displaying it in the editor.
 
-**NOTE** : *This extension does not supprot GUI apps.*
+**NOTE** : *This extension does not support GUI apps.*
 
 ![demo.gif](https://s11.gifyu.com/images/SurpE.gif)
 
@@ -45,6 +45,6 @@ Run Code Online currently supports the following programming languages:
 
 ## Feedback and Support
 
-If you encounter any issues or have suggestions for improvement, please don't hesitate to open an issue on the `benmeehan111@gmail.com`. Your feedback is valuable and appreciated.
+If you encounter any issues or have suggestions for improvement, please don't hesitate to raise an issue on `benmeehan111@gmail.com`. Your feedback is valuable and appreciated.
 
 **Enjoy coding with CodeOnline!**
