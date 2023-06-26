@@ -21,3 +21,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ### Removed
 
 - CodeEX API
+
+## [1.1.0] - 2023-06-26
+
+### Added
+- Better error message display
+- Correct timing for pop-up

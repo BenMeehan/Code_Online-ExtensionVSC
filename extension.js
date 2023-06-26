@@ -72,17 +72,17 @@ function activate(context) {
 			// Making an axios request to the API with the JSON content
 			axios(config)
 			.then(function (response) {
-				fs.writeFileSync(outputFile,response.data);
-			})
-			.catch(function (error) {
+				fs.writeFileSync(outputFile, response.data);
+
 				// Message to user
-			vscode.window.showInformationMessage(data);
-				fs.writeFileSync(outputFile,error);
-			});
+				vscode.window.showInformationMessage('Check the output file ', outputFile);
+			})
+			.catch(function (error){
+				fs.writeFileSync(outputFile, error.response.data);
 
-			// Message to user
-			vscode.window.showInformationMessage('Check the ', outputFile ,'file...');
-
+				// Message to user
+				vscode.window.showInformationMessage('An error occurred. Check the file ', outputFile);
+			})
 		}
 	});
 
