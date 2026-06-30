@@ -1,50 +1,89 @@
-# Run Code Online VSCode Extension
+# Run Code Online — VS Code Extension
 
-**Run Code Online** is a Visual Studio Code extension that allows you to compile and run code from multiple programming languages using an online compiler API. It simplifies the process of code execution by sending your code to the API, capturing the output, and displaying it in the editor.
-
-**NOTE** : *This extension does not supprot GUI apps.*
-
-![demo.gif](https://s11.gifyu.com/images/SurpE.gif)
+Compile and run code in **28+ programming languages** directly from VS Code using an online compiler API. With AI-powered code analysis, custom input support, and seamless editor integration.
 
 ## Supported Languages
 
-Run Code Online currently supports the following programming languages:
+| Category | Languages |
+|---|---|
+| **Systems** | C, C++, Rust, Go, D, Assembly (NASM x86-64) |
+| **JVM** | Java, Kotlin, Scala, Groovy |
+| **Scripting** | Python, JavaScript, TypeScript, Ruby, PHP, Perl, Lua, Bash |
+| **Functional** | Haskell, OCaml, Erlang, Elixir, Racket |
+| **Enterprise** | C#, Pascal, Fortran |
+| **Data Science** | R, Prolog |
 
-- C++
-- C
-- Python
-- Java
-- Javascript
-- Go
-- Rust
-- *more to be added soon...*
+> The extension auto-detects the language from your file extension. See the [backend README](https://github.com/benmeehan/gomult#supported-languages) for the full list of 28 language keys and their extensions.
 
 ## Features
 
-- Supports multiple programming languages.
-- Automatic language detection based on the file extension.
-- Ability to provide custom inputs for code execution.
-- Easy-to-use interface with a command and status bar integration.
-- Saves the output in a separate file for reference.
+- **28+ languages** — C, C++, Python, Java, JavaScript, Go, Rust, TypeScript, Kotlin, Scala, Ruby, PHP, Haskell, and many more
+- **Dynamic language discovery** — Auto-fetches supported languages from the API server on startup
+- **AI-powered analysis** — Optional Deepseek AI integration that analyzes your code for bugs, suggests fixes, and explains errors
+- **Custom input** — Enter stdin input inline via dialog, read from `input.txt`, or run without input
+- **Output channel** — Results are displayed in a dedicated VS Code output channel (with optional file output)
+- **Progress indicator** — Visual progress notification while your code runs
+- **Status bar integration** — One-click run from the status bar, shows the current language
+- **Keyboard shortcut** — `Ctrl+Alt+R` (`Cmd+Alt+R` on macOS)
+- **Context menu** — Right-click in the editor to run with/without input
+- **Editor title button** — Run button in the editor title bar
+- **Configurable API URL** — Point to your own server or the public one
+- **Auto-save** — Automatically saves your file before sending it
 
 ## Installation
 
-1. Launch Visual Studio Code.
-2. Go to the Extensions view (Ctrl+Shift+X).
-3. Search for "Run Code Online" and click **Install**.
-4. Once installed, the extension is ready to use.
+1. Launch VS Code
+2. Go to Extensions (`Ctrl+Shift+X`)
+3. Search for **Run Code Online**
+4. Click **Install**
 
 ## Usage
 
-1. Open a file with the code you want to run.
-2. Optionally, create an `input.txt` file in the same directory to provide custom inputs.
-3. Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS) to open the Command Palette.
-4. Type "CodeOnline: run" and select the command.
-5. The extension will compile the code and display the output in the editor.
-6. Check the output file (`YOUR_FILE_NAME-output.txt`) for reference.
+### Quick Run
+1. Open a code file (`.py`, `.cpp`, `.java`, `.js`, etc.)
+2. Press **`Ctrl+Alt+R`** (or `Cmd+Alt+R` on macOS)
+3. Choose how to provide input (or skip)
+4. View results in the **Output** panel
+
+### Other Ways to Run
+
+| Method | Action |
+|---|---|
+| **Status bar** | Click the `▶ Run <Language>` button in the status bar |
+| **Command Palette** | `Ctrl+Shift+P` → `Run Code Online` |
+| **Right-click** | Right-click in the editor → `Run Code Online` |
+| **Editor title** | Click the `▶` icon in the editor title bar |
+| **With input** | Command Palette → `Run Code Online (with input)` |
+| **No input** | Command Palette → `Run Code Online (no input)` |
+
+### Providing Input
+The extension offers three input modes:
+- **Enter custom input** — Type stdin data in an input box
+- **Read from input.txt** — Auto-reads `input.txt` from your file's directory
+- **No input** — Runs the program without stdin
+
+### AI Analysis
+Enable AI-powered code analysis in Settings (`Ctrl+,`):
+- Set `codeOnline.analyze` to `true`
+- The server must be configured with a Deepseek API key
+- Analysis results appear at the bottom of the output
+
+### Output
+- Results are displayed in the **Output** panel (View → Output → select "Run Code Online")
+- A copy is also saved as `<filename>-output.txt` in the same directory
+
+## Settings
+
+| Setting | Type | Default | Description |
+|---|---|---|---|
+| `codeOnline.apiUrl` | `string` | `https://load-balancer-1l8h.onrender.com` | API server URL |
+| `codeOnline.analyze` | `boolean` | `false` | Enable AI code analysis |
+| `codeOnline.showHeader` | `boolean` | `true` | Show info header in output |
 
 ## Feedback and Support
 
-If you encounter any issues or have suggestions for improvement, please don't hesitate to open an issue on the `benmeehan111@gmail.com`. Your feedback is valuable and appreciated.
+For issues, suggestions, or feature requests:
+- **Email**: benmeehan111@gmail.com
+- **Source**: [github.com/benmeehan/gomult](https://github.com/benmeehan/gomult)
 
-**Enjoy coding with CodeOnline!**
+**Enjoy coding with Run Code Online!**

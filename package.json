@@ -2,26 +2,91 @@
   "name": "runcodeonline",
   "displayName": "Run Code Online",
   "publisher": "BenMeehan111",
-  "description": "Run code online directly from VSCode",
+  "description": "Compile and run code in 28+ languages using an online compiler API. AI-powered error analysis, custom inputs, and seamless VS Code integration.",
   "icon": "images/layers.png",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "engines": {
     "vscode": "^1.63.0"
   },
   "categories": [
+    "Programming Languages",
     "Other"
   ],
   "activationEvents": [
-    "onCommand:codeonline.run"
+    "onCommand:codeonline.run",
+    "onCommand:codeonline.runWithInput",
+    "onCommand:codeonline.runNoInput"
   ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
       {
         "command": "codeonline.run",
-        "title": "run"
+        "title": "Run Code Online"
+      },
+      {
+        "command": "codeonline.runWithInput",
+        "title": "Run Code Online (with input)"
+      },
+      {
+        "command": "codeonline.runNoInput",
+        "title": "Run Code Online (no input)"
       }
-    ]
+    ],
+    "keybindings": [
+      {
+        "command": "codeonline.run",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r",
+        "when": "editorTextFocus"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "codeonline.run",
+          "group": "navigation",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "codeonline.runWithInput",
+          "group": "navigation",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "codeonline.runNoInput",
+          "group": "navigation",
+          "when": "editorTextFocus"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "codeonline.run",
+          "group": "navigation",
+          "when": "editorTextFocus"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Run Code Online",
+      "properties": {
+        "codeOnline.apiUrl": {
+          "type": "string",
+          "default": "https://load-balancer-1l8h.onrender.com",
+          "description": "URL of the Code Online API server"
+        },
+        "codeOnline.analyze": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable AI-powered code analysis using Deepseek (adds analysis to output)"
+        },
+        "codeOnline.showHeader": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show language and input info header in the output channel"
+        }
+      }
+    }
   },
   "scripts": {
     "lint": "eslint .",
