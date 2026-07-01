@@ -4,14 +4,9 @@ const path = require('path');
 const axios = require('axios');
 
 const defaultApiUrl = 'https://load-balancer-1l8h.onrender.com';
+const tailwindCdn = 'https://cdn.tailwindcss.com';
 
-let outputChannel;
-let statusBarItem;
-let extensionMap = {};
-let languageNames = {};
-
-// Fallback extension map (used before server fetch completes)
-const fallbackExtensionMap = {
+const fallbackMap = {
 	'.asm': 'asm', '.c': 'c', '.cpp': 'cpp', '.cs': 'cs',
 	'.d': 'd', '.erl': 'erl', '.exs': 'ex', '.f90': 'f90',
 	'.go': 'go', '.groovy': 'groovy', '.hs': 'hs',
@@ -22,232 +17,281 @@ const fallbackExtensionMap = {
 	'.ts': 'ts'
 };
 
+let extMap = Object.assign({}, fallbackMap);
+let langNames = {};
+let statusBar;
+let outputChannel;
+let currentView;
+let savedInput = '';
+let lastState = {};
+
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function buildHtml(state) {
+	const s = state || lastState || {};
+	lastState = s;
+	const status = s.status || 'idle';
+	const lang = s.lang || '';
+	const out = s.output || '';
+	const err = s.error || '';
+	const elapsed = s.time || '';
+	const inputVal = esc(savedInput);
+
+	let main = out, ai = '';
+	const idx = out.indexOf('\n\n[AI ANALYSIS]');
+	if (idx >= 0) { main = out.slice(0, idx); ai = out.slice(idx + 2).replace('[AI ANALYSIS]\n', ''); }
+
+	const pills = {
+		running: ['bg-blue-500/10 text-blue-300 border-blue-500/30', '◌ Running'],
+		ok: ['bg-emerald-500/10 text-emerald-300 border-emerald-500/30', '✓ Success'],
+		error: ['bg-red-500/10 text-red-300 border-red-500/30', '✗ Error'],
+		warn: ['bg-amber-500/10 text-amber-300 border-amber-500/30', '! Timeout'],
+		idle: ['bg-zinc-500/10 text-zinc-400 border-zinc-500/30', 'Ready']
+	};
+	const pill = pills[status] || pills.idle;
+	const inputsEmpty = !savedInput;
+
+	return `<!DOCTYPE html>
+<html lang="en" style="background:#1e1e1e">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${tailwindCdn}; script-src ${tailwindCdn} 'unsafe-inline';">
+<script src="${tailwindCdn}"></script>
+<style>
+  * { box-sizing:border-box; }
+  .mono { font-family:'JetBrains Mono','Fira Code','Cascadia Code','SF Mono',Consolas,monospace; font-size:12px; line-height:1.55; }
+  @keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+  .dot{animation:blink 1.2s ease-in-out infinite}
+  ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#555;border-radius:3px}
+  textarea:focus{outline:none;}
+</style>
+</head>
+<body class="bg-[#1e1e1e] text-[#d4d4d4] font-sans text-[13px] flex flex-col h-screen overflow-hidden">
+
+<!-- Header -->
+<div class="flex items-center justify-between px-3 py-2.5 border-b border-[#3e3e3e] shrink-0">
+  <div class="flex items-center gap-2">
+    <span class="text-[13px] font-semibold">⚡ Code Online</span>
+    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${pill[0]}">${pill[1]}</span>
+  </div>
+  <span class="text-[10px] text-[#666]">${lang}${elapsed ? ' · ' + elapsed : ''}</span>
+</div>
+
+<!-- Toolbar -->
+<div class="flex gap-1.5 px-3 py-2 border-b border-[#3e3e3e] shrink-0">
+  <button id="runBtn" onclick="post('run')" class="px-3 py-1.5 bg-[#0e639c] hover:bg-[#1177bb] text-white rounded text-[11px] font-medium transition-colors">▶ Run</button>
+  <button onclick="post('copy',{text:(document.getElementById('out')?.textContent||'')})" class="px-2.5 py-1.5 bg-[#3e3e3e] hover:bg-[#505050] rounded text-[11px] transition-colors">📋 Copy</button>
+  <button onclick="post('clear')" class="px-2.5 py-1.5 bg-[#3e3e3e] hover:bg-[#505050] rounded text-[11px] transition-colors">✕ Clear</button>
+  <button onclick="post('loadInput')" class="px-2.5 py-1.5 bg-[#3e3e3e] hover:bg-[#505050] rounded text-[11px] transition-colors">📄 Load input.txt</button>
+</div>
+
+<!-- Input area -->
+<details class="shrink-0" ${inputsEmpty ? '' : 'open'}>
+  <summary class="px-3 py-1.5 bg-[#252526] border-b border-[#3e3e3e] text-[11px] uppercase tracking-wider text-[#777] cursor-pointer hover:text-[#aaa] select-none">
+    ${inputsEmpty ? '▸ Input' : '▾ Input'} <span class="text-[10px] normal-case tracking-normal text-[#555] ml-1">— stdin data (optional)</span>
+  </summary>
+  <textarea id="inputArea" placeholder="Enter stdin input for your program..."
+    oninput="savedInput=this.value"
+    class="w-full px-3 py-2 bg-[#1a1a1a] text-[#d4d4d4] text-[12px] mono border-0 resize-none h-[60px] placeholder-[#555]"
+  >${inputVal}</textarea>
+</details>
+
+<!-- Output -->
+<div class="flex-1 overflow-auto">
+  ${err ? `<div class="mx-3 mt-3 px-3 py-2.5 bg-red-500/10 border border-red-500/20 rounded-lg text-red-300 text-[12px] mono whitespace-pre-wrap">${esc(err)}</div>` : ''}
+
+  ${main ? `<div class="mx-3 mt-3 rounded-lg border border-[#3e3e3e] overflow-hidden">
+    <div class="flex items-center justify-between px-2.5 py-1.5 bg-[#2d2d2d] border-b border-[#3e3e3e] text-[10px] uppercase tracking-wider text-[#777]">
+      <span>${status === 'error' ? 'Error' : 'Output'}</span>
+      <button onclick="navigator.clipboard.writeText(document.getElementById('out').textContent)" class="text-[#777] hover:text-[#bbb] transition-colors">Copy</button>
+    </div>
+    <div id="out" class="px-3 py-2.5 mono whitespace-pre-wrap break-words max-h-[50vh] overflow-y-auto">${esc(main)}</div>
+  </div>` : ''}
+
+  ${ai ? `<div class="mx-3 mt-2 rounded-lg border border-amber-500/20 overflow-hidden">
+    <div class="flex items-center px-2.5 py-1.5 bg-amber-500/5 border-b border-amber-500/10 text-[10px] uppercase tracking-wider text-amber-400">✦ AI Analysis</div>
+    <div class="px-3 py-2.5 mono whitespace-pre-wrap break-words">${esc(ai)}</div>
+  </div>` : ''}
+
+  ${!main && !err ? `<div class="flex items-center justify-center h-full">
+    <div class="text-center py-12 px-4">
+      <div class="text-2xl mb-3 opacity-25">${status === 'running' ? '<span class="text-blue-400 dot">◌</span>' : '▶'}</div>
+      <p class="text-[#777] text-[12px] leading-relaxed">
+        ${status === 'running' ? 'Running your code...' : `Press <kbd class="px-1.5 py-0.5 rounded bg-[#3e3e3e] text-[#bbb] text-[11px]">Cmd+Alt+R</kbd> or click <span class="text-[#4a9eff] font-medium">Run</span>`}
+      </p>
+      ${!lang && status !== 'running' ? `<p class="text-[#555] text-[11px] mt-2">Open a code file to get started</p>` : ''}
+    </div>
+  </div>` : ''}
+</div>
+
+<script>
+let savedInput = ${JSON.stringify(savedInput || '')};
+const vsc = acquireVsCodeApi();
+function post(cmd,data) { vsc.postMessage({command:cmd,input:document.getElementById('inputArea')?.value||'',...(data||{})}); }
+document.getElementById('inputArea')?.addEventListener('input', function() { savedInput = this.value; });
+</script>
+</body>
+</html>`;
+}
+
 function activate(context) {
 	outputChannel = vscode.window.createOutputChannel('Run Code Online');
-	outputChannel.appendLine('Run Code Online — activated');
 
-	statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-	statusBarItem.command = 'codeonline.run';
-	statusBarItem.text = '$(play) Run Code';
-	statusBarItem.tooltip = 'Run current file with Code Online';
-	context.subscriptions.push(statusBarItem);
+	statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+	statusBar.command = 'codeonline.run';
+	statusBar.text = '$(code) Run Code';
+	statusBar.tooltip = 'Run current file with Code Online';
+	context.subscriptions.push(statusBar);
 
 	fetchLanguages();
 
-	const runCommand = vscode.commands.registerCommand('codeonline.run', async () => {
-		await runCode(null);
-	});
-	context.subscriptions.push(runCommand);
+	context.subscriptions.push(vscode.window.registerWebviewViewProvider('codeonline.outputView', {
+		resolveWebviewView(view) {
+			currentView = view;
+			view.webview.options = { enableScripts: true };
+			view.webview.html = buildHtml(lastState);
+			view.webview.onDidReceiveMessage(m => {
+				if (m.input !== undefined) savedInput = m.input;
+				if (m.command === 'run') runCode(m.input || savedInput);
+				if (m.command === 'copy') vscode.env.clipboard.writeText(m.text || '');
+				if (m.command === 'clear') { lastState = {}; savedInput = ''; view.webview.html = buildHtml({}); }
+				if (m.command === 'loadInput') loadInputFromFile();
+			});
+		}
+	}));
 
-	const runWithInputCommand = vscode.commands.registerCommand('codeonline.runWithInput', async () => {
-		await runCode('input');
-	});
-	context.subscriptions.push(runWithInputCommand);
-
-	const runNoInputCommand = vscode.commands.registerCommand('codeonline.runNoInput', async () => {
-		await runCode('none');
-	});
-	context.subscriptions.push(runNoInputCommand);
+	context.subscriptions.push(vscode.commands.registerCommand('codeonline.run', () => {
+		const ed = vscode.window.activeTextEditor;
+		if (!ed) { vscode.window.showWarningMessage('Open a code file first.'); return; }
+		runCode(savedInput);
+	}));
+	context.subscriptions.push(vscode.commands.registerCommand('codeonline.runWithInput', async () => {
+		const ed = vscode.window.activeTextEditor;
+		if (!ed) { vscode.window.showWarningMessage('Open a code file first.'); return; }
+		const inp = await vscode.window.showInputBox({ placeHolder: 'Enter stdin input', prompt: 'Leave empty for no input' });
+		if (inp !== undefined) { savedInput = inp; runCode(inp); }
+	}));
+	context.subscriptions.push(vscode.commands.registerCommand('codeonline.runNoInput', () => {
+		const ed = vscode.window.activeTextEditor;
+		if (!ed) { vscode.window.showWarningMessage('Open a code file first.'); return; }
+		savedInput = '';
+		runCode('');
+	}));
+	context.subscriptions.push(vscode.commands.registerCommand('codeonline.focus', () => {
+		vscode.commands.executeCommand('codeonline.outputView.focus');
+	}));
+	context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(() => updateStatusBar()));
 
 	updateStatusBar();
+}
 
-	context.subscriptions.push(
-		vscode.window.onDidChangeActiveTextEditor(() => updateStatusBar())
-	);
+async function loadInputFromFile() {
+	const ed = vscode.window.activeTextEditor;
+	if (!ed) return;
+	const f = path.join(path.dirname(ed.document.uri.fsPath), 'input.txt');
+	try {
+		if (fs.existsSync(f)) {
+			savedInput = fs.readFileSync(f, 'utf-8');
+			if (currentView) currentView.webview.html = buildHtml(lastState);
+		}
+	} catch (_) { /* ignore */ }
 }
 
 async function fetchLanguages() {
-	const config = vscode.workspace.getConfiguration('codeOnline');
-	const apiUrl = config.get('apiUrl', defaultApiUrl);
-
+	const api = vscode.workspace.getConfiguration('codeOnline').get('apiUrl', defaultApiUrl);
 	try {
-		const response = await axios.get(`${apiUrl}/languages?detail=true`, { timeout: 5000 });
-		if (response.data) {
-			languageNames = {};
-			extensionMap = {};
-			for (const [key, info] of Object.entries(response.data)) {
-				languageNames[key] = info.name;
-				if (info.extension) {
-					extensionMap[info.extension] = key;
-				}
+		const r = await axios.get(`${api}/languages?detail=true`, { timeout: 5000 });
+		if (r.data) {
+			langNames = {}; extMap = {};
+			for (const [k, v] of Object.entries(r.data)) {
+				langNames[k] = v.name;
+				if (v.extension) extMap[v.extension] = k;
 			}
-			outputChannel.appendLine(`Loaded ${Object.keys(languageNames).length} languages from server.`);
 		}
-	} catch (err) {
-		outputChannel.appendLine(`Could not fetch languages: ${err.message} (using fallback map)`);
-		extensionMap = Object.assign({}, fallbackExtensionMap);
-		for (const key of Object.values(extensionMap)) {
-			if (!languageNames[key]) languageNames[key] = key.toUpperCase();
-		}
+	} catch (e) {
+		extMap = Object.assign({}, fallbackMap);
+		for (const k of Object.values(extMap)) { if (!langNames[k]) langNames[k] = k.toUpperCase(); }
 	}
 }
 
 function updateStatusBar() {
+	const ed = vscode.window.activeTextEditor;
+	if (!ed) { statusBar.hide(); return; }
+	const lk = extMap[path.extname(ed.document.fileName)];
+	statusBar.text = lk && langNames[lk] ? `$(code) Run ${langNames[lk]}` : '$(code) Run Code';
+	statusBar.tooltip = 'Run current file with Code Online';
+	statusBar.show();
+}
+
+function detectStatus(out) {
+	if (!out) return 'idle';
+	if (out.startsWith('[COMPILE ERROR]') || out.startsWith('[RUNTIME ERROR]')) return 'error';
+	if (out.startsWith('[TIME LIMIT EXCEEDED]')) return 'warn';
+	return 'ok';
+}
+
+function updateView(s) {
+	lastState = s;
+	if (currentView) {
+		currentView.webview.html = buildHtml(s);
+		currentView.show(true);
+	}
+}
+
+async function runCode(inputOverride) {
 	const editor = vscode.window.activeTextEditor;
-	if (editor) {
-		const ext = path.extname(editor.document.fileName);
-		const langKey = extensionMap[ext];
-		if (langKey && languageNames[langKey]) {
-			statusBarItem.text = `$(play) Run ${languageNames[langKey]}`;
-			statusBarItem.tooltip = `Run this ${languageNames[langKey]} file with Code Online`;
-		} else {
-			statusBarItem.text = '$(play) Run Code';
-			statusBarItem.tooltip = 'Run current file with Code Online';
-		}
-		statusBarItem.show();
-	} else {
-		statusBarItem.hide();
-	}
-}
+	if (!editor) { vscode.window.showWarningMessage('Open a code file first.'); return; }
 
-function formatOutput(output, language, input) {
-	const config = vscode.workspace.getConfiguration('codeOnline');
-	const showHeader = config.get('showHeader', true);
-	if (!showHeader) return output;
+	const fp = editor.document.uri.fsPath;
+	const lang = extMap[path.extname(fp)];
+	if (!lang) { vscode.window.showErrorMessage('Unsupported file extension.'); return; }
 
-	const langName = languageNames[language] || language;
-	const lines = [];
-	lines.push(`Language: ${langName}`);
-	if (input) lines.push(`Input:    ${input.replace(/\n/g, '\\n')}`);
-	lines.push('');
-	lines.push('─'.repeat(60));
-	lines.push(output);
-	lines.push('─'.repeat(60));
-	return lines.join('\n');
-}
-
-function getStatusMessage(output) {
-	if (output.startsWith('[COMPILE ERROR]')) return 'Compilation failed. Check output.';
-	if (output.startsWith('[RUNTIME ERROR]')) return 'Runtime error. Check output.';
-	if (output.startsWith('[TIME LIMIT EXCEEDED]')) return 'Time limit exceeded.';
-	return 'Code executed successfully.';
-}
-
-async function runCode(inputMode) {
-	const editor = vscode.window.activeTextEditor;
-	if (!editor) {
-		vscode.window.showWarningMessage('No active editor. Open a code file first.');
-		return;
-	}
-
-	const filePath = editor.document.uri.fsPath;
-	const fileExt = path.extname(filePath);
-	const language = extensionMap[fileExt];
-
-	if (!language) {
-		const supported = Object.keys(extensionMap).join(', ');
-		vscode.window.showErrorMessage(
-			`Unsupported file extension "${fileExt}".\nSupported: ${supported}`
-		);
-		return;
-	}
-
-	const config = vscode.workspace.getConfiguration('codeOnline');
-	const apiUrl = config.get('apiUrl', defaultApiUrl);
-	const analyze = config.get('analyze', false);
-
-	if (editor.document.isDirty) {
-		await editor.document.save();
-	}
-
+	const conf = vscode.workspace.getConfiguration('codeOnline');
+	const apiUrl = conf.get('apiUrl', defaultApiUrl);
+	const analyze = conf.get('analyze', false);
+	if (editor.document.isDirty) await editor.document.save();
 	const code = editor.document.getText();
-	const langName = languageNames[language] || language;
-
-	let input = '';
-	if (inputMode === 'none') {
-		// No input — skip
-	} else if (inputMode === 'input') {
-		// Direct input dialog
-		input = await vscode.window.showInputBox({
-			placeHolder: 'Enter input for your program (stdin)',
-			prompt: 'Leave empty for no input, or type the input data'
-		});
-		if (input === undefined) return;
-	} else {
-		// Default: show quick pick
-		const inputChoice = await vscode.window.showQuickPick(
-			[
-				{ label: '$(keyboard) Enter custom input', description: 'Type stdin input for your program' },
-				{ label: '$(file) Read from input.txt', description: 'Use input.txt from the file directory' },
-				{ label: '$(circle-slash) No input', description: 'Run without any input data' }
-			],
-			{ placeHolder: 'Provide input for the program?' }
-		);
-
-		if (!inputChoice) return;
-
-		if (inputChoice.label.includes('Enter custom input')) {
-			input = await vscode.window.showInputBox({
-				placeHolder: 'Enter input for your program (stdin)',
-				prompt: 'Leave empty for no input, or type the input data'
-			});
-			if (input === undefined) return;
-		} else if (inputChoice.label.includes('Read from input.txt')) {
-			const inputFile = path.join(path.dirname(filePath), 'input.txt');
-			try {
-				if (fs.existsSync(inputFile)) {
-					input = fs.readFileSync(inputFile, { encoding: 'utf-8' });
-				} else {
-					vscode.window.showWarningMessage('input.txt not found. Running without input.');
-				}
-			} catch (err) {
-				vscode.window.showWarningMessage(`Could not read input.txt: ${err.message}`);
-			}
-		}
-	}
+	const langName = langNames[lang] || lang;
+	const input = inputOverride !== undefined ? inputOverride : savedInput;
 
 	outputChannel.clear();
-	outputChannel.show(true);
-	outputChannel.appendLine(`Running ${langName} code${analyze ? ' with AI analysis' : ''}...`);
+	outputChannel.appendLine(`Running ${langName}${analyze ? ' with AI' : ''}...`);
+	savedInput = input;
+	updateView({ status: 'running', lang: langName });
+	const t0 = Date.now();
 
 	await vscode.window.withProgress(
-		{
-			location: vscode.ProgressLocation.Notification,
-			title: `Running ${langName} code${analyze ? ' (with AI analysis)' : ''}...`,
-			cancellable: false
-		},
+		{ location: vscode.ProgressLocation.Notification, title: `Running ${langName}...`, cancellable: false },
 		async () => {
 			try {
-				const response = await axios.post(
-					`${apiUrl}/compile`,
-					{
-						code,
-						language,
-						input: input || '',
-						analyze
-					},
-					{
-						headers: { 'Content-Type': 'application/json' },
-						timeout: 60000
-					}
-				);
-
-				const rawOutput = response.data;
-				const displayOutput = formatOutput(rawOutput, language, input);
-				outputChannel.appendLine(displayOutput);
-
-				const outputFile = filePath.substring(0, filePath.lastIndexOf('.')) + '-output.txt';
-				fs.writeFileSync(outputFile, rawOutput);
-
-				vscode.window.showInformationMessage(getStatusMessage(rawOutput));
-			} catch (error) {
-				let message = 'Failed to run code.';
-				if (error.response) {
-					const status = error.response.status;
-					const data = typeof error.response.data === 'string' ? error.response.data : JSON.stringify(error.response.data);
-					outputChannel.appendLine(`[Server Error ${status}] ${data}`);
-					message = `Server error (${status}). Check output for details.`;
-				} else if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-					outputChannel.appendLine(`[Connection Error] Cannot reach ${apiUrl}`);
-					message = 'Cannot reach the Code Online server. Check your connection.';
-				} else if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
-					outputChannel.appendLine(`[Timeout] Request to ${apiUrl} timed out.`);
-					message = 'Request timed out. The server may be busy.';
+				const r = await axios.post(`${apiUrl}/compile`, { code, language: lang, input: input || '', analyze }, {
+					headers: { 'Content-Type': 'application/json' }, timeout: 60000
+				});
+				const raw = r.data;
+				const elapsed = ((Date.now() - t0) / 1000).toFixed(2);
+				const st = detectStatus(raw);
+				fs.writeFileSync(fp.replace(/\.[^.]+$/, '-output.txt'), raw);
+				outputChannel.appendLine(raw);
+				updateView({ status: st, lang: langName, output: raw, time: `${elapsed}s` });
+				statusBar.text = `$(pass) ${langName}`;
+				setTimeout(updateStatusBar, 3000);
+			} catch (e) {
+				const elapsed = ((Date.now() - t0) / 1000).toFixed(2);
+				let msg = 'Failed', detail = '';
+				if (e.response) {
+					detail = `Server ${e.response.status}: ${typeof e.response.data === 'string' ? e.response.data : ''}`;
+					msg = e.response.status === 429 ? 'Rate limited.' : `Server error (${e.response.status}).`;
+				} else if (e.code === 'ECONNREFUSED' || e.code === 'ENOTFOUND') {
+					detail = `Cannot reach ${apiUrl}`; msg = 'Cannot reach server.';
+				} else if (e.code === 'ETIMEDOUT' || e.code === 'ECONNABORTED') {
+					detail = 'Timed out — infinite loop?'; msg = 'Request timed out.';
+				} else if (e.code === 'ECONNRESET' || String(e.message).includes('socket hang up')) {
+					detail = 'Connection lost — infinite loop?'; msg = 'Connection lost.';
 				} else {
-					outputChannel.appendLine(`[Error] ${error.message}`);
-					message = `Error: ${error.message}`;
+					detail = e.message; msg = e.message;
 				}
-				vscode.window.showErrorMessage(message);
+				updateView({ status: 'error', lang: langName, error: `${msg}\n${detail}`, time: `${elapsed}s` });
+				vscode.window.showErrorMessage(msg);
 			}
 		}
 	);
@@ -255,7 +299,7 @@ async function runCode(inputMode) {
 
 function deactivate() {
 	if (outputChannel) outputChannel.dispose();
-	if (statusBarItem) statusBarItem.dispose();
+	if (statusBar) statusBar.dispose();
 }
 
 module.exports = { activate, deactivate };

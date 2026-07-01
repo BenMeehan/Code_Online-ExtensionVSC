@@ -15,22 +15,49 @@
   "activationEvents": [
     "onCommand:codeonline.run",
     "onCommand:codeonline.runWithInput",
-    "onCommand:codeonline.runNoInput"
+    "onCommand:codeonline.runNoInput",
+    "onView:codeonline.outputView"
   ],
   "main": "./extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codeonline",
+          "title": "Run Code Online",
+          "icon": "$(code)"
+        }
+      ]
+    },
+    "views": {
+      "codeonline": [
+        {
+          "type": "webview",
+          "id": "codeonline.outputView",
+          "name": "Output"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "codeonline.run",
-        "title": "Run Code Online"
+        "title": "Run Code Online",
+        "icon": "$(run)"
       },
       {
         "command": "codeonline.runWithInput",
-        "title": "Run Code Online (with input)"
+        "title": "Run Code Online (with input)",
+        "icon": "$(keyboard)"
       },
       {
         "command": "codeonline.runNoInput",
-        "title": "Run Code Online (no input)"
+        "title": "Run Code Online (no input)",
+        "icon": "$(circle-slash)"
+      },
+      {
+        "command": "codeonline.focus",
+        "title": "Focus on Code Online View",
+        "icon": "$(run)"
       }
     ],
     "keybindings": [
@@ -45,17 +72,17 @@
       "editor/context": [
         {
           "command": "codeonline.run",
-          "group": "navigation",
+          "group": "navigation@1",
           "when": "editorTextFocus"
         },
         {
           "command": "codeonline.runWithInput",
-          "group": "navigation",
+          "group": "navigation@2",
           "when": "editorTextFocus"
         },
         {
           "command": "codeonline.runNoInput",
-          "group": "navigation",
+          "group": "navigation@3",
           "when": "editorTextFocus"
         }
       ],
@@ -64,6 +91,13 @@
           "command": "codeonline.run",
           "group": "navigation",
           "when": "editorTextFocus"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "codeonline.run",
+          "group": "navigation",
+          "when": "view == codeonline.outputView"
         }
       ]
     },
@@ -78,12 +112,12 @@
         "codeOnline.analyze": {
           "type": "boolean",
           "default": false,
-          "description": "Enable AI-powered code analysis using Deepseek (adds analysis to output)"
+          "description": "Enable AI-powered code analysis using Deepseek"
         },
         "codeOnline.showHeader": {
           "type": "boolean",
           "default": true,
-          "description": "Show language and input info header in the output channel"
+          "description": "Show language and input info in the output channel"
         }
       }
     }
@@ -105,6 +139,6 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
-    "axios": "^0.25.0"
+    "axios": "^1.18.1"
   }
 }
